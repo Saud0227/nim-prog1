@@ -1,3 +1,27 @@
+require 'json'
+
+if File.exists?("game_data.json")
+    file = File.open("game_data.json", 'r')
+    file_data = File.read("game_data.json")
+    $save_game = JSON.parse(file_data)
+    file.close()
+    $save_game = $save_game["games"]
+else
+    $save_game = []
+end
+
+raw_configs = File.readlines("msg.txt")
+i = 0
+$configs = []
+while i < raw_configs.length
+    new_item = raw_configs[i].split(";")
+    new_item[1] = new_item[1].split(",")
+    $configs << new_item
+    i += 1
+end
+
+p $configs
+
 def main_menu()
 
     active = true
@@ -14,14 +38,38 @@ def main_menu()
 
             puts "(1): Single Player"
             puts "(2): Multiplayer"
+            puts "(3): Load game"
 
         elsif menu_state == 1
             puts "How many players are there?"
+        elsif menu_state == 2
+            puts "What game would you like to finish? (q to go back)"
+            i = 0
+
+            while i < $save_game.length
+                puts "\n"
+                puts "GAME NMR: #{i}"
+                puts "PLAYERS: "
+                j = 0
+                while j < $save_game[i]["players"].length
+                    puts " - #{$save_game[i]["players"][j]}"
+                    j += 1
+                end
+                puts "Pile: #{$save_game[i]["pile"]}"
+                puts "Turn: #{$save_game[i]["players"][$save_game[i]["turn"]]}"
+                if $save_game[i]["secret_flag"] != 0
+                    puts "Secret: #{$save_game[i]["secret_flag"]}"
+                end
+                i += 1
+            end
         end
+
 
         # Tar input
         # -----------------------------------------------------
+        # puts "\n"
         c_input = await_user_input()
+        puts "\n"
 
 
         # Checkar om q
@@ -43,6 +91,8 @@ def main_menu()
             elsif c_input == 2
                 menu_state = 1
                 next
+            elsif c_input == 3
+                menu_state = 2
             end
 
 
@@ -50,15 +100,18 @@ def main_menu()
 
             # Checka att vi har minst 1 spelare
             if (c_input < 1 || c_input > 13)
-                puts "Please enter a intiger between 1 and 13"
+                puts "Please enter a integer between 1 and 13"
                 next
             end
             $names = get_players(c_input)
             active = false
+
+        elsif menu_state == 2
+
         end
 
     end
-    
+
 end
 
 def await_user_input()
@@ -69,13 +122,27 @@ def await_user_input()
     return user_get
 end
 
+def check_for_easter_egg()
+    # config_names = $configs[2].split
+    # i = 0
+    # while i < $names.length
+    #   j = 0
+    #   while j < config_names.length
+    # Vi har tre arrayer, vi behöver kolla alla namn för alla confignamn i alla olika configs
+end
+    
+
 
 def get_players(num_players)
     curent_player_names = []
     i = 0
     while i < num_players
         puts "Player #{i+1}, whats your name?"
-        curent_player_names << gets.chomp
+        c_in = gets.chomp
+        if c_in.downcase == "q"
+
+        end
+        curent_player_names << 
         i += 1
     end
     return curent_player_names
@@ -89,70 +156,145 @@ def game_loop()
     if use_bot
         $names << "BOT"
     end
+    bot_diff = 3
+
+    puts "--PLAYERS--"
+    i = 0
+    while i < $names.length
+        puts $names[i]
+        i += 1
+    end
+
     while true
         while pile > 0
             while turn < $names.length
-                if pile == 1
-                    #Enter gameover screen with "stats"
-                end
-                if use_bot && turn == 1
-                    pile -= bot_turn
-                    turn += 1
+                puts "PILE: #{pile}"
+                if use_bot && (turn == 1)
+                    b_move = bot_turn(pile, bot_diff)
+                    puts "#{$names[turn]} played #{b_move}"
+                    pile -= b_move
                 else
-                    puts "How many sticks are you taking #{$names[turn]}? Choose 1-3."
-                    pile -= player_turn
-                    turn += 1
+                    puts "How many sticks are you taking #{$names[turn]} choose between 1 and 3."
+                    pile -= player_turn(pile)
                 end
+                if pile == 0
+                    if use_bot
+                        $names.pop(1)
+                    end
+                    p $names
+                    return turn
+                end
+                turn += 1
             end
+            turn = 0
         end
-        turn = 0
     end
-
 end
 
 
-def player_turn()
-    amount_of_sticks = gets.chomp
-    while amount_of_sticks.to_i < 1 || amount_of_sticks.to_i > 3
+def player_turn(c_value)
+    amount_of_sticks = await_user_input()
+    if amount_of_sticks == "q"
+        raise Interrupt
+    end
+    while (amount_of_sticks.to_i < 1) || (amount_of_sticks.to_i > ([3, c_value].min))
         if amount_of_sticks != "0" && amount_of_sticks.to_i == 0
-            puts "Please send in a whole number between 1-3"
+            puts "Please send in a whole number between 1-#{[3, c_value].min}"
+            amount_of_sticks = gets.chomp.to_i
         else
-            puts "You tried to take #{amount_of_sticks} sticks. Please choose between 1-3 sticks."
-            amount_of_sticks = gets.chomp
+            puts "You tried to take #{amount_of_sticks} sticks. Please choose between 1-#{[3, c_value].min} sticks."
+            amount_of_sticks = gets.chomp.to_i
         end
     end
     return amount_of_sticks.to_i
 end
 
 
-def bot_turn(c_data)
+def bot_turn(c_data, diff)
     game_states = [
-        [0], # 0 [Error happend]
-
-        [1], # 1 [Loss]
-
-        [1], # 2 [win
-        [2], # 3 [win]
-        [3], # 4 [win]
-
-        [1], # 5 [loss]
-
-        [1], # 6 [force into a1]
-        [2], # 7 [force into a1]
-        [3], # 8 [force into a1]
-
-        [1], # 9 [loss]
-
-        [1], # 10 [force into a2]
-        [2], # 11 [force into a2]
-        [3], # 12 [force into a2]
-
-        [1], # 13 [loss]
-
-        [1], # 14 [force into a2]
-        [2], # 15 [force into a2]
+        [0, 0, 0], # 0 [Error happend]
+        [1, 1, 1], # 1 [Loss]
+        [1, 1, 1], # 2 [win
+        [2, 1, 1], # 3 [win]
+        [3, 3, 2], # 4 [win]
+        [1, 2, 2], # 5 [loss]
+        [1, 1, 3], # 6 [force into a1]
+        [2, 1, 1], # 7 [force into a1]
+        [3, 3, 2], # 8 [force into a1]
+        [1, 1, 4], # 9 [loss]
+        [1, 3, 2], # 10 [force into a2]
+        [2, 2, 1], # 11 [force into a2]
+        [3, 3, 4], # 12 [force into a2]
+        [1, 3, 2], # 13 [loss]
+        [1, 1, 2], # 14 [force into a2]
+        [2, 1, 3], # 15 [force into a2]
     ]
+    return game_states[c_data][3-diff]
 end
+
+
+def game_over(loser = nil)
+
+    menu_state = 0
+    if loser != nil
+        puts "The loser was #{$names[loser]}!"
+        puts "-------------------------------"
+    end
+
+    while true
+
+        # Print text
+
+        if menu_state == 0
+            puts "Would you like to play again?"
+            puts "(1): Yes"
+            puts "(2): No"
+
+        elsif menu_state == 1
+            puts "Do you want the same configuration or another?"
+            puts "(1): Same settings"
+            puts "(2): Different settings"
+        end
+
+        # Hanlde input
+        c_input = await_user_input()
+
+        # check q
+        if (c_input == "q" && menu_state == 0)
+            return 0
+        elsif (c_input == "q")
+            menu_state = 0
+            next
+        end
+
+        # Menue specifik
+        if menu_state == 0
+            if !(c_input == 1 || c_input == 2)
+                puts "Please enter a valid input, 1 or 2."
+                next
+            end
+            if c_input == 1
+                menu_state = 1
+            else
+                return 0
+            end
+        elsif menu_state == 1
+
+            if !(c_input == 1 || c_input == 2)
+                puts "Please enter a valid input, 1 or 2."
+                next
+            end
+
+            if c_input == 1
+                return 1
+            elsif c_input == 2
+                return 0
+            end
+        end
+    end
+end
+
+
 
 
 def main_loop()
@@ -160,22 +302,32 @@ def main_loop()
     $game_state = 0
     $names = []
 
+
     # starup
 
     # load game data?
     # skriver ngt
     begin
         while true
+            loser = nil
+
             if $game_state == 0
                 main_menu()
-                $game_state == 1
+                $game_state = 1
+                system("cls")
             end
 
             if $game_state == 1
-                game_loop()
+                loser = game_loop()
+                $game_state = 2
+                system("cls")
             end
 
-            p "h"
+            if $game_state == 2
+                $game_state = game_over(loser)
+                system("cls")
+            end
+
 
 
         end
