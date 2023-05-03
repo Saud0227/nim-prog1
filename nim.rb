@@ -20,7 +20,7 @@ while i < raw_configs.length
     i += 1
 end
 
-p $configs
+p $configs.length
 
 def main_menu()
 
@@ -34,7 +34,7 @@ def main_menu()
         # Skriver menu text
         if menu_state == 0
             puts "Main Menu"
-            puts "Wich mode do you want to play?"
+            puts "Which mode do you want to play?"
 
             puts "(1): Single Player"
             puts "(2): Multiplayer"
@@ -70,7 +70,6 @@ def main_menu()
         # puts "\n"
         c_input = await_user_input()
         puts "\n"
-
 
         # Checkar om q
         if (c_input == "q" && menu_state == 0)
@@ -123,12 +122,39 @@ def await_user_input()
 end
 
 def check_for_easter_egg()
-    # config_names = $configs[2].split
-    # i = 0
-    # while i < $names.length
-    #   j = 0
-    #   while j < config_names.length
-    # Vi har tre arrayer, vi behöver kolla alla namn för alla confignamn i alla olika configs
+    i = 0
+    egg_array = []
+    while i < $players.length
+        egg = 1
+        while egg < $configs.length
+            j = 0
+            while $players[i].downcase != $configs[egg][1][j] && j < $configs[egg][1].length
+                j += 1
+            end
+            if $players[i].downcase == $configs[egg][1][j]
+                egg_array << $configs[egg][0]
+            end
+            egg += 1
+        end
+        i += 1
+    end
+
+    i = 0
+    while i < egg_array.length
+        if egg_array[0] != egg_array[i]
+            $egg_custom_msg = "How many sticks are you taking?"
+            $egg_pile_name = "PILE"
+            return nil
+        end
+    end
+    j = 0
+    while j < $configs.length
+        if egg_array[0] == $configs[j][0]
+            $egg_custom_msg = $configs[j][4]
+            $egg_pile_name = $configs[j][3]
+        end
+    end
+    
 end
     
 
@@ -142,15 +168,16 @@ def get_players(num_players)
         if c_in.downcase == "q"
 
         end
-        curent_player_names << 
+        curent_player_names << c_in
         i += 1
     end
     return curent_player_names
 end
 
+
 def game_loop()
     turn = 0
-    pile = rand(12..15)
+    piles = Array.new(rand(1..5)) { rand(12..15) }
     use_bot = ($names.length == 1)
 
     if use_bot
@@ -166,18 +193,29 @@ def game_loop()
     end
 
     while true
-        while pile > 0
+        while piles.length > 0
             while turn < $names.length
-                puts "PILE: #{pile}"
+                puts "PILES: #{piles}"
                 if use_bot && (turn == 1)
                     b_move = bot_turn(pile, bot_diff)
                     puts "#{$names[turn]} played #{b_move}"
                     pile -= b_move
                 else
+                    puts "Which pile would you like to pick from?"
+                    pile = choose_pile(piles)
+                    puts "There are #{piles[pile-1]} stick in pile number: #{pile}."
+
                     puts "How many sticks are you taking #{$names[turn]} choose between 1 and 3."
-                    pile -= player_turn(pile)
+                    piles[pile-1] -= player_turn(piles[pile-1])
                 end
-                if pile == 0
+                i = 0
+                while i < piles.length
+                    if piles[i] == 0
+                        piles.delete_at(i)
+                    end
+                    i += 1
+                end
+                if piles.length == 0
                     if use_bot
                         $names.pop(1)
                     end
@@ -191,6 +229,14 @@ def game_loop()
     end
 end
 
+def choose_pile(piles)
+    pile = await_user_input()
+    while pile < 1 || pile > piles.length
+        puts "Please choose an existing pile, choose between 1 and #{piles.length}"
+        pile = await_user_input()
+    end
+    return pile
+end
 
 def player_turn(c_value)
     amount_of_sticks = await_user_input()
@@ -301,6 +347,8 @@ def main_loop()
 
     $game_state = 0
     $names = []
+    $egg_pile_name = ""
+    $egg_custom_msg = ""
 
 
     # starup
