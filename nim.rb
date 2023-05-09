@@ -20,8 +20,6 @@ while i < raw_configs.length
     i += 1
 end
 
-p $configs.length
-
 def main_menu()
 
     active = true
@@ -123,36 +121,36 @@ def await_user_input()
 end
 
 def check_for_easter_egg()
-    puts "Checking for easter egg test"
     i = 0
-    egg_array = Array.new($names.length, 0)
+    egg_array = Array.new($names.length, 0) #Skapar en tom array med längden $names.length med alla värden 0
     while i < $names.length
         egg = 1
         while egg < $configs.length
             j = 0
-            while $names[i].downcase != $configs[egg][1][j] && j < $configs[egg][1].length
+            while j < $configs[egg][1].length
+                if $names[i].downcase == $configs[egg][1][j] #Går igenom och jämnför alla easter egg arrayer och jämnför med namn
+                    egg_array[i] = $configs[egg][0] #egg_array får värdet av easter egg konfigurationen ifall namnet finns inuti listan
+                    j = $configs[egg][1].length
+                end
                 j += 1
-            end
-            if $names[i].downcase == $configs[egg][1][j]
-                egg_array[i] = $configs[egg][0]
             end
             egg += 1
         end
         i += 1
     end
 
-
+    # Kollar ifall alla värden i egg_array är samma och sätter därmed custom messages till easter egg konfigurationen, annars sätter den till standard värdet.
     i = 1
     while i < egg_array.length
         if egg_array[0] != egg_array[i]
             $egg_custom_msg = $configs[0][3].chomp
-            $egg_pile_name = $configs[0][2].chomp
+            $egg_stick_name = $configs[0][2].chomp
             return nil
         end
         i += 1
     end
     $egg_custom_msg = $configs[egg_array[0].to_i][3].chomp
-    $egg_pile_name = $configs[egg_array[0].to_i][2].chomp
+    $egg_stick_name = $configs[egg_array[0].to_i][2].chomp
 end
     
 
@@ -199,9 +197,9 @@ def game_loop()
                     puts "#{$names[turn]} played #{b_move}"
                     pile -= b_move
                 else
-                    puts "#{$names[turn]} which pile of #{$egg_pile_name.downcase} would you like to pick from?"
+                    puts "#{$names[turn]} which pile of #{$egg_stick_name.downcase} would you like to pick from?"
                     pile = choose_pile(piles)
-                    puts "There are #{piles[pile-1]} #{$egg_pile_name.downcase} in pile number: #{pile}."
+                    puts "There are #{piles[pile-1]} #{$egg_stick_name.downcase} in pile number: #{pile}."
 
                     puts "#{$egg_custom_msg}. #{$names[turn]} choose between 1 and 3."
                     piles[pile-1] -= player_turn(piles[pile-1])
@@ -230,7 +228,7 @@ end
 def choose_pile(piles)
     pile = await_user_input()
     while pile < 1 || pile > piles.length
-        puts "Please choose an existing #{$egg_pile_name.downcase} pile, choose between 1 and #{piles.length}"
+        puts "Please choose an existing #{$egg_stick_name.downcase} pile, choose between 1 and #{piles.length}"
         pile = await_user_input()
     end
     return pile
@@ -246,7 +244,7 @@ def player_turn(c_value)
             puts "Please send in a whole number between 1-#{[3, c_value].min}"
             amount_of_sticks = gets.chomp.to_i
         else
-            puts "You tried to take #{amount_of_sticks} #{$egg_pile_name.downcase}. Please choose between 1-#{[3, c_value].min} #{$egg_pile_name.downcase}."
+            puts "You tried to take #{amount_of_sticks} #{$egg_stick_name.downcase}. Please choose between 1-#{[3, c_value].min} #{$egg_stick_name.downcase}."
             amount_of_sticks = gets.chomp.to_i
         end
     end
@@ -345,7 +343,7 @@ def main_loop()
 
     $game_state = 0
     $names = []
-    $egg_pile_name = ""
+    $egg_stick_name = ""
     $egg_custom_msg = ""
 
 
