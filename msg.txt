@@ -1,5 +1,5 @@
-normal;;PILE: ;How many sticks are you taking?
-star_wars;yoda,leia organa,obi-wan kenobi,han solo,luke skywalker,darth vader,emperor palpatine,boba fett,lando calrissian,qui-gon jinn,padme amidala,anakin skywalker,chewbacca,rey,finn,po dameron,kylo ren,bb-8,c-3po,r2-d2,mace windu,jabba the hutt,jango fett ;LIGHTSABERS: ;Let The force guide you, how many lightsabers shall you wield?
-minecraft;creeper,enderman,zombie,pigman,enderdragon,steve,alex,wolf,ocelot,iron golem,villager,skeleton,spider,witch,slime,ghast,blaze,guardian,elderguardian,zombievillager,drowned,polarbear,panda,llama,horse,donkey,mule,cat,fox,bee,strider,hoglin,piglin,zombifiedpiglin ;STICKS: ;A villager wants to trade, how many sticks will you trade him?
-lord_of_the_rings;frodo,samwise,gandalf,aragorn,legolas,gimli,boromir,pippin,merry,saruman,sauron,bilbo,elrond,galadriel,gollum,treebeard,faramir,eowyn,eomer,theoden,denethor,grimawormtongue,radagast ;RINGS: ;How many rings will your throw into Mount Doom?
-tf2;scout, soldier, pyro, demoman, heavy, engineer, medic, sniper, spy ;PAYLOADS: ;How many payloads do you want to push?
+0;;STICKS;How many sticks are you taking?
+1;yoda,leia organa,obi-wan kenobi,han solo,luke skywalker,darth vader,emperor palpatine,boba fett,lando calrissian,qui-gon jinn,padme amidala,anakin skywalker,chewbacca,rey,finn,po dameron,kylo ren,bb-8,c-3po,r2-d2,mace windu,jabba the hutt,jango fett;LIGHTSABERS;Let The force guide you, how many lightsabers shall you wield?
+2;creeper,enderman,zombie,pigman,enderdragon,steve,alex,wolf,ocelot,iron golem,villager,skeleton,spider,witch,slime,ghast,blaze,guardian,elderguardian,zombievillager,drowned,polarbear,panda,llama,horse,donkey,mule,cat,fox,bee,strider,hoglin,piglin,zombifiedpiglin;EMERALDS;A villager wants to trade, how many emeralds will you trade him?
+3;frodo,samwise,gandalf,aragorn,legolas,gimli,boromir,pippin,merry,saruman,sauron,bilbo,elrond,galadriel,gollum,treebeard,faramir,eowyn,eomer,theoden,denethor,grimawormtongue,radagast;RINGS;How many rings will your throw into Mount Doom?
+4;scout,soldier,pyro,demoman,heavy,engineer,medic,sniper,spy;PAYLOADS;How many payloads do you want to push?
