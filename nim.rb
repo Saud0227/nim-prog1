@@ -172,8 +172,8 @@ end
 
 
 def game_loop()
-    turn = 0
-    piles = Array.new(rand(1..5)) { rand(12..15) }
+    # $turn = 0 Kanske kan ta bort denna?
+    $piles = Array.new(rand(1..5)) { rand(12..15) }
     use_bot = ($names.length == 1)
 
     if use_bot
@@ -189,49 +189,49 @@ def game_loop()
     end
 
     while true
-        while piles.length > 0
-            while turn < $names.length
-                puts "PILES: #{piles}"
-                if use_bot && (turn == 1)
-                    b_move = bot_turn(pile, bot_diff)
-                    puts "#{$names[turn]} played #{b_move}"
-                    pile -= b_move
+        while $piles.length > 0
+            while $turn < $names.length
+                puts "PILES: #{$piles}"
+                if use_bot && ($turn == 1)
+                    b_move = bot_turn(ind_pile, bot_diff)
+                    puts "#{$names[$turn]} played #{b_move}"
+                    ind_pile -= b_move
                 else
-                    puts "#{$names[turn]} which pile of #{$egg_stick_name.downcase} would you like to pick from?"
-                    pile = choose_pile(piles)
-                    puts "There are #{piles[pile-1]} #{$egg_stick_name.downcase} in pile number: #{pile}."
+                    puts "#{$names[$turn]} which pile of #{$egg_stick_name.downcase} would you like to pick from?"
+                    ind_pile = choose_pile()
+                    puts "There are #{$piles[ind_pile-1]} #{$egg_stick_name.downcase} in pile number: #{ind_pile}."
 
-                    puts "#{$egg_custom_msg}. #{$names[turn]} choose between 1 and 3."
-                    piles[pile-1] -= player_turn(piles[pile-1])
+                    puts "#{$egg_custom_msg}. #{$names[$turn]} choose between 1 and 3."
+                    $piles[ind_pile-1] -= player_turn($piles[ind_pile-1])
                 end
                 i = 0
-                while i < piles.length
-                    if piles[i] == 0
-                        piles.delete_at(i)
+                while i < $piles.length
+                    if $piles[i] == 0
+                        $piles.delete_at(i)
                     end
                     i += 1
                 end
-                if piles.length == 0
+                if $piles.length == 0
                     if use_bot
                         $names.pop(1)
                     end
                     p $names
-                    return turn
+                    return $turn
                 end
-                turn += 1
+                $turn += 1
             end
-            turn = 0
+            $turn = 0
         end
     end
 end
 
-def choose_pile(piles)
-    pile = await_user_input()
-    while pile < 1 || pile > piles.length
-        puts "Please choose an existing #{$egg_stick_name.downcase} pile, choose between 1 and #{piles.length}"
-        pile = await_user_input()
+def choose_pile()
+    ind_pile = await_user_input()
+    while ind_pile < 1 || ind_pile > $piles.length
+        puts "Please choose an existing #{$egg_stick_name.downcase} pile, choose between 1 and #{$piles.length}"
+        ind_pile = await_user_input()
     end
-    return pile
+    return ind_pile
 end
 
 def player_turn(c_value)
@@ -342,10 +342,13 @@ end
 def main_loop()
 
     $game_state = 0
-    $names = []
+    
     $egg_stick_name = ""
     $egg_custom_msg = ""
 
+    $piles = []
+    $names = []
+    $turn = 0
 
     # starup
 
