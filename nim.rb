@@ -1,3 +1,7 @@
+# Rasmus Brandt
+# Carl Johan Ståhl
+# 2B
+
 require 'json'
 
 
@@ -12,7 +16,7 @@ def load_data_files()
         file.close()
         $save_game = $save_game["games"]
     else
-        $save_game = []
+        $save_game = {}
     end
 
     raw_configs = File.readlines("msg.txt")
@@ -51,6 +55,11 @@ def main_menu()
         elsif menu_state == 1
             puts "How many players are there?"
         elsif menu_state == 2
+            if $save_game.keys().length == 0
+                puts "No games to load"
+                menu_state = 0
+                next
+            end
             puts "What game would you like to finish? (q to go back)"
             i = 0
 
@@ -138,6 +147,10 @@ def main_menu()
             end
 
             c_input = c_input.to_i
+            if c_input < 0 ||c_input >= keys.length
+                puts "non valid save game ID"
+                next
+            end
             ls = c_input
             menu_state = 3
 
@@ -212,9 +225,6 @@ def get_players(num_players)
     while i < num_players
         puts "Player #{i+1}, whats your name?"
         c_in = gets.chomp
-        if c_in.downcase == "q"
-
-        end
         curent_player_names << c_in
         i += 1
     end
