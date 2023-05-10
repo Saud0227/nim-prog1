@@ -1,36 +1,45 @@
 require 'json'
 
-if File.exists?("game_data.json")
-    file = File.open("game_data.json", 'r')
-    file_data = File.read("game_data.json")
-    $save_game = JSON.parse(file_data)
-    file.close()
-    $save_game = $save_game["games"]
-else
-    $save_game = []
+
+# FILE OPERATIONS
+# ----------------------------------------------------------------
+
+def load_data_files()
+    if File.exists?("game_data.json")
+        file = File.open("game_data.json", 'r')
+        file_data = File.read("game_data.json")
+        $save_game = JSON.parse(file_data)
+        file.close()
+        $save_game = $save_game["games"]
+    else
+        $save_game = []
+    end
+
+    raw_configs = File.readlines("msg.txt")
+    i = 0
+    $configs = []
+    while i < raw_configs.length
+        new_item = raw_configs[i].split(";")
+        new_item[1] = new_item[1].split(",")
+        $configs << new_item
+        i += 1
+    end
 end
 
-raw_configs = File.readlines("msg.txt")
-i = 0
-$configs = []
-while i < raw_configs.length
-    new_item = raw_configs[i].split(";")
-    new_item[1] = new_item[1].split(",")
-    $configs << new_item
-    i += 1
-end
 
+
+# MAIN MENU
+# ----------------------------------------------------------------
 def main_menu()
 
     active = true
     menu_state = 0
     ls = 0
 
-
     while active
 
-
         # Skriver menu text
+        # ----------------------------------------------------------------
         if menu_state == 0
             puts "Main Menu"
             puts "Which mode do you want to play?"
@@ -60,9 +69,6 @@ def main_menu()
                 end
                 puts "Pile: #{item["pile"]}"
                 puts "Turn: #{item["players"][item["turn"]]}"
-                if item["secret_flag"] != 0
-                    puts "Secret: #{item["secret_flag"]}"
-                end
                 i += 1
             end
 
@@ -73,14 +79,11 @@ def main_menu()
             puts "(1): Yes"
             puts "(2): No"
 
-
-
-
         end
 
 
         # Tar input
-        # -----------------------------------------------------
+        # ----------------------------------------------------------------
         # puts "\n"
         # om inget annant angivet
         if menu_state != 2
@@ -97,12 +100,13 @@ def main_menu()
         end
 
         # Agerar olika beroende på menu
+        # ----------------------------------------------------------------
         if menu_state == 0
-            # menu_state = menu_state.to_i
 
             if c_input == 1
                 puts "LETS GO"
                 $names = [get_players(1)[0]]
+                check_for_easter_egg()
                 active = false
             elsif c_input == 2
                 menu_state = 1
@@ -145,10 +149,9 @@ def main_menu()
             item = $save_game[$save_game.keys[ls]]
             $save_game.delete($save_game.keys[ls])
             $names = item["players"]
+            check_for_easter_egg()
 
             return item
-
-
 
         end
 
@@ -156,6 +159,8 @@ def main_menu()
 
 end
 
+# Funktion för att ta input till menyval och likande
+# ----------------------------------------------------------------
 def await_user_input()
     user_get = gets.chomp.downcase
     if user_get != "q"
@@ -164,6 +169,8 @@ def await_user_input()
     return user_get
 end
 
+# Funktion för att aktivera easter egg
+# ----------------------------------------------------------------
 def check_for_easter_egg()
     i = 0
     egg_array = Array.new($names.length, 0) #Skapar en tom array med längden $names.length med alla värden 0
@@ -183,7 +190,7 @@ def check_for_easter_egg()
         i += 1
     end
 
-    # Kollar ifall alla värden i egg_array är samma och sätter därmed custom messages till easter egg konfigurationen, annars sätter den till standard värdet.
+    # Kollar ifall alla värden i egg_array är samma eller inte.
     i = 1
     while i < egg_array.length
         if egg_array[0] != egg_array[i]
@@ -197,8 +204,8 @@ def check_for_easter_egg()
     $egg_stick_name = $configs[egg_array[0].to_i][2].chomp
 end
 
-
-
+# Ta in namn på spelare
+# ----------------------------------------------------------------
 def get_players(num_players)
     curent_player_names = []
     i = 0
@@ -215,6 +222,8 @@ def get_players(num_players)
 end
 
 
+# Huvud lopopen när vi spelar spelet
+# ----------------------------------------------------------------
 def game_loop(save_game)
     $turn = 0
     $piles = Array.new(rand(1..5)) { rand(12..15) }
@@ -228,15 +237,13 @@ def game_loop(save_game)
         $names << "BOT"
     end
 
-    # om ngn lallar och gör dum skit säger vi fuck you
-    # pga save files
     if $names[-1] == 'BOT'
         # Det detta gör är att om ngn är dum och kör multiplayer men heter bot
         # Så blir det ett singelplayer spel
         # Finns anledningar för detta
         use_bot = true
     end
-    bot_diff = 1
+    bot_diff = 3
 
     puts "--PLAYERS--"
     i = 0
@@ -250,8 +257,10 @@ def game_loop(save_game)
             while $turn < $names.length
                 puts "PILES: #{$piles}"
                 if use_bot && ($turn == 1)
-                    b_pile, b_take = bot_turn(piles, bot_diff)
-                    puts "#{$names[$turn]} took #{b_take} from #{b_pile + 1}"
+                    b_pile, b_take = bot_turn($piles, bot_diff)
+
+                    puts "#{$names[$turn]} took #{b_take} #{$egg_stick_name.downcase} from pile #{b_pile + 1}"
+
                     $piles[b_pile] -= b_take
                 else
                     puts "#{$names[$turn]} which pile of #{$egg_stick_name.downcase} would you like to pick from?"
@@ -269,9 +278,6 @@ def game_loop(save_game)
                     i += 1
                 end
                 if $piles.length == 0
-                    if use_bot
-                        $names.pop(1)
-                    end
                     p $names
                     return $turn
                 end
@@ -282,6 +288,8 @@ def game_loop(save_game)
     end
 end
 
+# Inmatnings funktion för spelet (med att välja hög)
+# ----------------------------------------------------------------
 def choose_pile()
     ind_pile = await_user_input()
     if ind_pile == 'q'
@@ -294,6 +302,8 @@ def choose_pile()
     return ind_pile
 end
 
+# Inmatnings funktion för spelet (med att välja antal pinnar)
+# ----------------------------------------------------------------
 def player_turn(c_value)
     amount_of_sticks = await_user_input()
     if amount_of_sticks == "q"
@@ -311,7 +321,8 @@ def player_turn(c_value)
     return amount_of_sticks.to_i
 end
 
-
+# Boten kör sin tur
+# ----------------------------------------------------------------
 def bot_turn(c_data, diff)
     if diff == 2 or diff == 3
         if c_data.length == 3
@@ -338,22 +349,22 @@ def bot_turn(c_data, diff)
             return pile_to_take, sticks
         else
             game_states = [
-                [0], # 0 [Error happend]
-                [1], # 1 [Loss]
-                [1], # 2 [win
-                [2], # 3 [win]
-                [3], # 4 [win]
-                [1], # 5 [loss]
-                [1], # 6 [force into a1]
-                [2], # 7 [force into a1]
-                [3], # 8 [force into a1]
-                [1], # 9 [loss]
-                [1], # 10 [force into a2]
-                [2], # 11 [force into a2]
-                [3], # 12 [force into a2]
-                [1], # 13 [loss]
-                [1], # 14 [force into a2]
-                [2], # 15 [force into a2]
+                0, # 0 [Error happend]
+                1, # 1 [Loss]
+                1, # 2 [win
+                2, # 3 [win]
+                3, # 4 [win]
+                1, # 5 [loss]
+                1, # 6 [force into a1]
+                2, # 7 [force into a1]
+                3, # 8 [force into a1]
+                1, # 9 [loss]
+                1, # 10 [force into a2]
+                2, # 11 [force into a2]
+                3, # 12 [force into a2]
+                1, # 13 [loss]
+                1, # 14 [force into a2]
+                2, # 15 [force into a2]
             ]
             return 0, game_states[c_data[0]]
         end
@@ -365,6 +376,8 @@ def bot_turn(c_data, diff)
 end
 
 
+# GameOver Screen
+# ----------------------------------------------------------------
 def game_over(loser = nil)
 
     menu_state = 0
@@ -430,9 +443,10 @@ end
 
 
 def main_loop()
+    load_data_files()
 
     $game_state = 0
-    
+
     $egg_stick_name = ""
     $egg_custom_msg = ""
 
@@ -442,8 +456,7 @@ def main_loop()
 
     # starup
 
-    # load game data?
-    # skriver ngt
+    # load game data
     begin
         while true
             loser = nil
@@ -473,19 +486,17 @@ def main_loop()
 
     rescue Interrupt
         if $game_state == 1
-            print("!")
+            puts "Gamed saved!"
+            $save_game[Time.now.strftime("%Y%m%d-%H.%M")] = {
+                "players": $names,
+                "pile": $piles,
+                "turn": $turn
+            }
         end
 
         file = File.open("game_data.json", 'w')
         file.write(JSON.pretty_generate({"games" => $save_game}))
-        # p $save_game
-        # p JSON.pretty_generate($save_game)
-        # file.write("test")
         file.close()
-    # rescue NoMethodError
-    #     puts "NoMethodError caught"
-    #     puts "If you were loading files when this error ocured, there is a posibility that your game data file is corupted"
-    #     puts "Try deleting your file to resolv"
     end
 end
 
