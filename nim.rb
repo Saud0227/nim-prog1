@@ -24,6 +24,7 @@ def main_menu()
 
     active = true
     menu_state = 0
+    ls = 0
 
 
     while active
@@ -44,30 +45,48 @@ def main_menu()
             puts "What game would you like to finish? (q to go back)"
             i = 0
 
-            while i < $save_game.length
+            keys = $save_game.keys()
+
+            while i < keys.length
+                item = $save_game[keys[i]]
                 puts "\n"
-                puts "GAME NMR: #{i}"
+                puts "ID: #{i}"
+                puts "PLAYED: #{keys[i]}"
                 puts "PLAYERS: "
                 j = 0
-                while j < $save_game[i]["players"].length
-                    puts " - #{$save_game[i]["players"][j]}"
+                while j < item["players"].length
+                    puts " - #{item["players"][j]}"
                     j += 1
                 end
-                puts "Pile: #{$save_game[i]["pile"]}"
-                puts "Turn: #{$save_game[i]["players"][$save_game[i]["turn"]]}"
-                if $save_game[i]["secret_flag"] != 0
-                    puts "Secret: #{$save_game[i]["secret_flag"]}"
+                puts "Pile: #{item["pile"]}"
+                puts "Turn: #{item["players"][item["turn"]]}"
+                if item["secret_flag"] != 0
+                    puts "Secret: #{item["secret_flag"]}"
                 end
                 i += 1
             end
+
+        elsif menu_state == 3
+            puts "\n"
+            puts "selected: #{ls}"
+            puts "Want to load?"
+            puts "(1): Yes"
+            puts "(2): No"
+
+
+
+
         end
 
 
         # Tar input
         # -----------------------------------------------------
         # puts "\n"
-        c_input = await_user_input()
-        puts "\n"
+        # om inget annant angivet
+        if menu_state != 2
+            c_input = await_user_input()
+            puts "\n"
+        end
 
         # Checkar om q
         if (c_input == "q" && menu_state == 0)
@@ -79,7 +98,7 @@ def main_menu()
 
         # Agerar olika beroende på menu
         if menu_state == 0
-            menu_state = menu_state.to_i
+            # menu_state = menu_state.to_i
 
             if c_input == 1
                 puts "LETS GO"
@@ -105,6 +124,31 @@ def main_menu()
             active = false
 
         elsif menu_state == 2
+            c_input = gets.chomp.downcase
+            if c_input == 'q'
+                menu_state = 0
+                next
+            elsif c_input.to_i.to_s != c_input
+                puts "Please enter number"
+                next
+            end
+
+            c_input = c_input.to_i
+            ls = c_input
+            menu_state = 3
+
+        elsif menu_state == 3
+            if c_input != 1
+                menu_state = 2
+                next
+            end
+            item = $save_game[$save_game.keys[ls]]
+            $save_game.delete($save_game.keys[ls])
+            $names = item["players"]
+
+            return item
+
+
 
         end
 
@@ -152,7 +196,7 @@ def check_for_easter_egg()
     $egg_custom_msg = $configs[egg_array[0].to_i][3].chomp
     $egg_stick_name = $configs[egg_array[0].to_i][2].chomp
 end
-    
+
 
 
 def get_players(num_players)
@@ -171,15 +215,28 @@ def get_players(num_players)
 end
 
 
-def game_loop()
-    # $turn = 0 Kanske kan ta bort denna?
+def game_loop(save_game)
+    $turn = 0
     $piles = Array.new(rand(1..5)) { rand(12..15) }
+    if save_game != nil
+        $piles = save_game["pile"]
+        $turn = save_game["turn"]
+    end
     use_bot = ($names.length == 1)
 
     if use_bot
         $names << "BOT"
     end
-    bot_diff = 3
+
+    # om ngn lallar och gör dum skit säger vi fuck you
+    # pga save files
+    if $names[-1] == 'BOT'
+        # Det detta gör är att om ngn är dum och kör multiplayer men heter bot
+        # Så blir det ett singelplayer spel
+        # Finns anledningar för detta
+        use_bot = true
+    end
+    bot_diff = 1
 
     puts "--PLAYERS--"
     i = 0
@@ -193,9 +250,9 @@ def game_loop()
             while $turn < $names.length
                 puts "PILES: #{$piles}"
                 if use_bot && ($turn == 1)
-                    b_move = bot_turn(ind_pile, bot_diff)
-                    puts "#{$names[$turn]} played #{b_move}"
-                    ind_pile -= b_move
+                    b_pile, b_take = bot_turn(piles, bot_diff)
+                    puts "#{$names[$turn]} took #{b_take} from #{b_pile + 1}"
+                    $piles[b_pile] -= b_take
                 else
                     puts "#{$names[$turn]} which pile of #{$egg_stick_name.downcase} would you like to pick from?"
                     ind_pile = choose_pile()
@@ -227,6 +284,9 @@ end
 
 def choose_pile()
     ind_pile = await_user_input()
+    if ind_pile == 'q'
+        raise Interrupt
+    end
     while ind_pile < 1 || ind_pile > $piles.length
         puts "Please choose an existing #{$egg_stick_name.downcase} pile, choose between 1 and #{$piles.length}"
         ind_pile = await_user_input()
@@ -253,25 +313,55 @@ end
 
 
 def bot_turn(c_data, diff)
-    game_states = [
-        [0, 0, 0], # 0 [Error happend]
-        [1, 1, 1], # 1 [Loss]
-        [1, 1, 1], # 2 [win
-        [2, 1, 1], # 3 [win]
-        [3, 3, 2], # 4 [win]
-        [1, 2, 2], # 5 [loss]
-        [1, 1, 3], # 6 [force into a1]
-        [2, 1, 1], # 7 [force into a1]
-        [3, 3, 2], # 8 [force into a1]
-        [1, 1, 4], # 9 [loss]
-        [1, 3, 2], # 10 [force into a2]
-        [2, 2, 1], # 11 [force into a2]
-        [3, 3, 4], # 12 [force into a2]
-        [1, 3, 2], # 13 [loss]
-        [1, 1, 2], # 14 [force into a2]
-        [2, 1, 3], # 15 [force into a2]
-    ]
-    return game_states[c_data][3-diff]
+    if diff == 2 or diff == 3
+        if c_data.length == 3
+            i = 0
+            if c_data[0] < c_data[1]
+                i = 1
+            end
+            if c_data[i] < c_data[2]
+                i = 2
+            end
+            pile_to_take = i
+
+            sticks = [3, c_data[i]].min
+            return pile_to_take, sticks
+        elsif c_data.length == 2
+            if c_data[0] < c_data[1]
+                i = 1
+            else
+                i = 0
+            end
+            pile_to_take = i
+
+            sticks = [3, c_data[i]].min
+            return pile_to_take, sticks
+        else
+            game_states = [
+                [0], # 0 [Error happend]
+                [1], # 1 [Loss]
+                [1], # 2 [win
+                [2], # 3 [win]
+                [3], # 4 [win]
+                [1], # 5 [loss]
+                [1], # 6 [force into a1]
+                [2], # 7 [force into a1]
+                [3], # 8 [force into a1]
+                [1], # 9 [loss]
+                [1], # 10 [force into a2]
+                [2], # 11 [force into a2]
+                [3], # 12 [force into a2]
+                [1], # 13 [loss]
+                [1], # 14 [force into a2]
+                [2], # 15 [force into a2]
+            ]
+            return 0, game_states[c_data[0]]
+        end
+    elsif diff == 1
+        pile_to_take = rand(0..c_data.length)
+        sticks = rand(1..([3, c_data[pile_to_take]].min))
+        return pile_to_take, sticks
+    end
 end
 
 
@@ -359,13 +449,15 @@ def main_loop()
             loser = nil
 
             if $game_state == 0
-                main_menu()
+                load_game = main_menu()
+
                 $game_state = 1
                 system("cls")
             end
 
             if $game_state == 1
-                loser = game_loop()
+                loser = game_loop(load_game)
+                load_game = nil
                 $game_state = 2
                 system("cls")
             end
@@ -380,11 +472,20 @@ def main_loop()
         end
 
     rescue Interrupt
+        if $game_state == 1
+            print("!")
+        end
 
-
-        # save curent game (if any)
-        print("!")
-
+        file = File.open("game_data.json", 'w')
+        file.write(JSON.pretty_generate({"games" => $save_game}))
+        # p $save_game
+        # p JSON.pretty_generate($save_game)
+        # file.write("test")
+        file.close()
+    # rescue NoMethodError
+    #     puts "NoMethodError caught"
+    #     puts "If you were loading files when this error ocured, there is a posibility that your game data file is corupted"
+    #     puts "Try deleting your file to resolv"
     end
 end
 
